@@ -15,33 +15,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'delete_user') {
         $uid = $_POST['uid'] ?? 0;
-        $db->query("DELETE FROM users WHERE id=$uid");
+        // Faille SQL, faut preparer la requete
+        $db->prepare("DELETE FROM orders WHERE user_id=?")->execute([$uid]);
         $ok = "Utilisateur supprimé.";
     }
 
     if ($action === 'set_role') {
         $uid  = $_POST['uid'] ?? 0;
         $role = $_POST['role'] ?? 'user';
-        $db->query("UPDATE users SET role='$role' WHERE id=$uid");
+        // Faille SQL, faut preparer la requete
+        $db->prepare("UPDATE users SET role=? WHERE id=?")->execute([$role, $uid]);
         $ok = "Rôle mis à jour.";
     }
 
     if ($action === 'delete_product') {
         $pid = $_POST['pid'] ?? 0;
-        $db->query("DELETE FROM products WHERE id=$pid");
+        // Faille SQL, faut preparer la requete
+        $db->prepare("DELETE FROM products WHERE id=?")->execute([$pid]);
         $ok = "Produit supprimé.";
     }
 
     if ($action === 'delete_review') {
         $rid = $_POST['rid'] ?? 0;
-        $db->query("DELETE FROM reviews WHERE id=$rid");
+        // Faille SQL, faut preparer la requete
+        $db->prepare("DELETE FROM reviews WHERE id=?")->execute([$rid]);
         $ok = "Avis supprimé.";
     }
 
     if ($action === 'add_balance') {
         $uid    = $_POST['uid'] ?? 0;
         $amount = floatval($_POST['amount'] ?? 0);
-        $db->query("UPDATE users SET balance=balance+$amount WHERE id=$uid");
+        // Faille SQL, faut preparer la requete
+        $db->prepare("UPDATE users SET balance=balance+? WHERE id=?")->execute([$amount, $uid]);
         $ok = "Solde modifié.";
     }
 }

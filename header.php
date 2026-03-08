@@ -1,5 +1,12 @@
 <?php
-session_start();
+
+// Faille csrf aucune genstion de cookie de session, pas de token csrf 
+session_start([
+    'cookie_httponly' => true,   // ✅ Cookie inaccessible depuis JS
+    'cookie_secure'   => true,   // ✅ Cookie transmis uniquement en HTTPS
+    'cookie_samesite' => 'Strict', // ✅ Cookie non envoyé depuis un autre site
+]);
+
 require_once __DIR__ . '/init.php';
 $me = current_user();
 ?>

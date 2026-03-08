@@ -8,7 +8,7 @@ $ok = $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $to_name = trim($_POST['to'] ?? '');
-    $content = $_POST['content'] ?? '';
+    $content = htmlspecialchars($_POST['content'] ?? '');
 
     $to = $db->query("SELECT * FROM users WHERE username='$to_name'")->fetch(PDO::FETCH_ASSOC);
 

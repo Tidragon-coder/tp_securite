@@ -7,19 +7,23 @@ $sort    = $_GET['sort'] ?? 'name';
 $results = [];
 
 if ($q !== '') {
-    $results = db()->query(
+  // Faille SQL, faut preparer la requete
+  $results = db()->prepare(
         "SELECT p.*, u.username as seller FROM products p
          JOIN users u ON p.seller_id = u.id
-         WHERE p.name LIKE '%$q%' OR p.description LIKE '%$q%'
+         WHERE p.name LIKE ? OR p.description LIKE ?
          ORDER BY $sort ASC"
-    )->fetchAll(PDO::FETCH_ASSOC);
+    );
+    $results->execute(["%$q%","%$q%"]);
+    $results = $results->fetchAll(PDO::FETCH_ASSOC);
 }
 ?>
 <div class="card">
   <h1>🔍 Recherche</h1>
   <form method="GET">
     <div style="display:flex;gap:10px;margin-bottom:14px">
-      <input type="text" name="q" value="<?= $q ?>" placeholder="Rechercher un produit..." style="margin:0">
+      <!-- Faille XSS, utiliser htmlspecialchars -->
+      <input type="text" name="q" value="<?= htmlspecialchars($q) ?>" placeholder="Rechercher un produit..." style="margin:0">
       <select name="sort" style="width:auto;margin:0">
         <option value="name" <?= $sort==='name'?'selected':'' ?>>Nom</option>
         <option value="price" <?= $sort==='price'?'selected':'' ?>>Prix</option>
@@ -30,7 +34,8 @@ if ($q !== '') {
 
   <?php if ($q !== ''): ?>
     <p style="font-size:13px;color:#888;margin-bottom:14px">
-      <?= count($results) ?> résultat(s) pour : <?= $q ?>
+      <!-- Faille XSS, utiliser htmlspecialchars -->
+      <?= count($results) ?> résultat(s) pour : <?= htmlspecialchars($q)?>
     </p>
     <?php if ($results): ?>
     <div class="grid">

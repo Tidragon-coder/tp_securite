@@ -9,12 +9,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $p = $_POST['password'] ?? '';
     $e = trim($_POST['email'] ?? '');
     if ($u && $p && $e) {
-        try {
-            db()->prepare("INSERT INTO users (username,password,email) VALUES (?,?,?)")
-               ->execute([$u, md5($p), $e]);
-            $ok = "Compte créé ! <a href='login.php'>Se connecter</a>";
-        } catch (Exception $ex) {
-            $error = "Ce nom d'utilisateur est déjà pris.";
+        // Petite validation basique de securité
+        if (mb_strlen($p) < 10) {
+            $error = "Le mot de passe doit contenir au moins 10 caracteres.";
+        }else{
+            try {
+                db()->prepare("INSERT INTO users (username,password,email) VALUES (?,?,?)")
+                ->execute([$u, md5($p), $e]);
+                $ok = "Compte créé ! <a href='login.php'>Se connecter</a>";
+            } catch (Exception $ex) {
+                $error = "Ce nom d'utilisateur est déjà pris.";
+            }
         }
     } else {
         $error = "Tous les champs sont obligatoires.";

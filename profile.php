@@ -18,7 +18,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $is_own) {
     if ($action === 'update') {
         $bio   = $_POST['bio']   ?? '';
         $email = $_POST['email'] ?? '';
-        $db->query("UPDATE users SET bio='$bio', email='$email' WHERE id=" . $me['id']);
+        // Faille SQL, faut preparer la requete
+        $db->prepare("UPDATE users SET bio=?, email=? WHERE id=?")->execute([$bio, $email, $me['id']]);
         $ok   = "Profil mis à jour.";
         $user = $db->query("SELECT * FROM users WHERE id = $uid")->fetch(PDO::FETCH_ASSOC);
     }
@@ -26,7 +27,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $is_own) {
     if ($action === 'password') {
         $np = $_POST['new_password'] ?? '';
         if (strlen($np) >= 4) {
-            $db->query("UPDATE users SET password='" . md5($np) . "' WHERE id=" . $me['id']);
+            // Faille SQL, faut preparer la requete
+            $db->prepare("UPDATE users SET password=? WHERE id=?")->execute([md5($np), $me['id']]);
             $ok = "Mot de passe modifié.";
         } else {
             $error = "Mot de passe trop court.";
@@ -34,7 +36,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $is_own) {
     }
 
     if ($action === 'delete') {
-        $db->query("DELETE FROM users WHERE id=" . $me['id']);
+        // Faille SQL, faut preparer la requete
+        $db->prepare("DELETE FROM orders WHERE user_id=?")->execute([$me['id']]);
         session_destroy();
         header('Location: index.php'); exit;
     }
@@ -57,7 +60,8 @@ $orders = $db->query(
   <p><strong>Solde :</strong> <?= number_format($user['balance'],2) ?> €</p>
   <p><strong>Bio :</strong></p>
   <div style="background:#f8f8f8;padding:10px;border-radius:5px;margin-top:6px">
-    <?= $user['bio'] ?: '<em style="color:#aaa">Aucune bio.</em>' ?>
+    <!-- Faille XSS -->
+    <?= htmlspecialchars($user['bio']) ?: '<em style="color:#aaa">Aucune bio.</em>' ?>
   </div>
 </div>
 

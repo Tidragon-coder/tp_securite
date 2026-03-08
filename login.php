@@ -4,20 +4,36 @@ require_once 'header.php';
 
 $error = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = $_POST['username'] ?? '';
-    $password = $_POST['password'] ?? '';
+try {
+        $pdo = new PDO('sqlite:D:\code\secure_programming\tp\tp_securite\shop.db' , null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        ]);
 
-    $query = "SELECT * FROM users WHERE username='$username' AND password='" . md5($password) . "'";
-    $user  = db()->query($query)->fetch(PDO::FETCH_ASSOC);
+  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+      $username = $_POST['username'] ?? '';
+      $password = $_POST['password'] ?? '';
 
-    if ($user) {
-        $_SESSION['uid'] = $user['id'];
-        header('Location: index.php');
-        exit;
-    } else {
-        $error = "Identifiants incorrects.";
-    }
+      // Faille SQL, faut preparer la requete
+      $query = "SELECT * FROM users WHERE username='$username' AND password='" . md5($password) . "'";
+      $user  = db()->query($query)->fetch(PDO::FETCH_ASSOC);
+
+      // $query = $pdo->prepare("SELECT * FROM users WHERE username= :username AND password= :password");
+      // $query->execute([
+      //   'username' => $username, 
+      //   'password' => md5($password)]);
+      // $user  = $query->fetch(PDO::FETCH_ASSOC);
+
+      if ($user) {
+          $_SESSION['uid'] = $user['id'];
+          header('Location: index.php');
+          exit;
+      } else {
+          $error = "Identifiants incorrects.";
+      }
+  }
+} catch (Exception $ex) {
+    error_log("DB Error: " . $e->getMessage());
+    $message = "❌ Une erreur s'est produite. Veuillez réessayer.";
 }
 ?>
 <div class="card" style="max-width:400px;margin:0 auto">

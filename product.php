@@ -4,11 +4,14 @@ require_once 'header.php';
 
 $id = $_GET['id'] ?? 0;
 
-$product = db()->query(
+// Faille SQL, faut preparer la requete
+$stmt = db()->prepare(
     "SELECT p.*, u.username as seller, u.email as seller_email
-     FROM products p JOIN users u ON p.seller_id = u.id
-     WHERE p.id = $id"
-)->fetch(PDO::FETCH_ASSOC);
+    FROM products p JOIN users u ON p.seller_id = u.id
+    WHERE p.id = ?"
+);
+$stmt->execute([$id]);
+$product = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$product) {
     echo '<div class="err">Produit introuvable.</div>';
@@ -27,9 +30,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $me) {
 
         if ($coupon !== '') {
             $c = db()->query("SELECT * FROM coupons WHERE code='$coupon' AND used=0")->fetch(PDO::FETCH_ASSOC);
+
+            // Faille SQL, faut preparer la requete
+            $stmt_c = db()->prepare("SELECT * FROM coupons WHERE code=? AND used=0");
+            $stmt_c->execute([$coupon]);
+            $c = $stmt_c->fetch(PDO::FETCH_ASSOC);
+
             if ($c) {
                 $total = $total * (1 - $c['discount'] / 100);
-                db()->query("UPDATE coupons SET used=used+1 WHERE code='$coupon'");
+                db()->prepare("UPDATE coupons SET used=used+1 WHERE code=?")->execute([$coupon]);
             }
         }
 
@@ -40,8 +49,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $me) {
         } else {
             db()->prepare("INSERT INTO orders (user_id,product_id,quantity,total) VALUES (?,?,?,?)")
                ->execute([$me['id'], $id, $qty, $total]);
-            db()->query("UPDATE users SET balance=balance-$total WHERE id=" . $me['id']);
-            db()->query("UPDATE products SET stock=stock-$qty WHERE id=$id");
+              
+            // Faille SQL, faut preparer les requetes
+            db()->prepare("UPDATE users SET balance=balance-? WHERE id=?")->execute([$total, $me['id']]);
+            // db()->query("UPDATE users SET balance=balance-$total WHERE id=" . $me['id']);
+            db()->prepare("UPDATE products SET stock=stock-? WHERE id=?")->execute([$qty, $id]);
+            // db()->query("UPDATE products SET stock=stock-$qty WHERE id=$id");
+
             $ok = "Commande passée ! Total : " . number_format($total,2) . "€";
             $me = current_user();
         }
@@ -101,7 +115,8 @@ $avg = count($reviews) ? round(array_sum(array_column($reviews,'rating')) / coun
       <span class="stars"><?= str_repeat('★',$rv['rating']) ?></span> —
       <?= $rv['created_at'] ?>
     </p>
-    <div style="margin-top:6px"><?= $rv['content'] ?></div>
+    <!-- Faille XSS -->
+    <?php echo htmlspecialchars($rv['content']) ?>
   </div>
   <?php endforeach; ?>
 
